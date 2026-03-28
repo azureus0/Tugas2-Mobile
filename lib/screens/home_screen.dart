@@ -7,6 +7,9 @@ import './bilangan_screen.dart';
 import './jumlah_total_screen.dart';
 import './stopwatch_screen.dart';
 import './piramid_screen.dart';
+import './weton_screen.dart';
+import './umur_screen.dart';
+import './hijriah_screen.dart';
 
 class _MenuItem {
   final String title;
@@ -61,6 +64,25 @@ class HomeScreen extends StatelessWidget {
       icon: Icons.change_history_rounded,
       color: AppColors.green,
       screen: PiramidScreen(),
+    ),
+    // ===== MENU BARU =====
+    _MenuItem(
+      title: 'Konversi\nWeton',
+      icon: Icons.auto_stories_rounded,
+      color: AppColors.teal,
+      screen: WetonScreen(),
+    ),
+    _MenuItem(
+      title: 'Kalkulator\nUmur',
+      icon: Icons.cake_rounded,
+      color: AppColors.purple,
+      screen: UmurScreen(),
+    ),
+    _MenuItem(
+      title: 'Konversi\nHijriah',
+      icon: Icons.mosque_rounded,
+      color: AppColors.orange,
+      screen: HijriahScreen(),
     ),
   ];
 
