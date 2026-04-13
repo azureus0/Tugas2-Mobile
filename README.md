@@ -1,95 +1,86 @@
 # Tugas 2 - Pemrograman Mobile
 
-Aplikasi Flutter multi-menu dengan tema dark, dibuat sebagai tugas kelompok mata kuliah Pemrograman Mobile.
+Aplikasi Flutter multi-fitur untuk tugas mata kuliah Pemrograman Mobile. Project ini memakai struktur berbasis `features`, memiliki halaman login, menu utama, dan beberapa fitur utilitas/perhitungan seperti aritmatika, bilangan, hijriah, stopwatch, piramid, weton, umur, jumlah total, dan kalender Saka Bali.
 
----
-
-## 🚀 Cara Menjalankan
+## Menjalankan Project
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-Login menggunakan username dan password yang terdaftar di `models/user_model.dart`.
+Login memakai data user yang disimpan di `lib/user_model.dart`.
 
----
+## Struktur Project
 
-## 📁 Struktur File
-
-```
+```text
 lib/
-├── main.dart
-├── models/
-│   └── user_model.dart
-├── theme/
-│   └── app_colors.dart
-└── screens/
-    ├── login_screen.dart
-    ├── home_screen.dart
-    ├── data_kelompok_screen.dart
-    ├── aritmatika_screen.dart
-    ├── bilangan_screen.dart
-    ├── jumlah_total_screen.dart
-    ├── stopwatch_screen.dart
-    └── piramid_screen.dart
++-- main.dart
++-- app_colors.dart
++-- user_model.dart
++-- widgets/
+�   +-- detail_row.dart
++-- features/
+    +-- auth/
+    +-- home/
+    +-- data_kelompok/
+    +-- aritmatika/
+    +-- bilangan/
+    +-- hijriah/
+    +-- jumlah_total/
+    +-- piramid/
+    +-- saka/
+    +-- stopwatch/
+    +-- umur/
+    +-- weton/
+    +-- placeholder/
 ```
 
----
+Setiap fitur umumnya dipisah menjadi:
+- `*_screen.dart` untuk tampilan/UI
+- `*_helper.dart` untuk logika bantu/perhitungan
 
-## 📄 Penjelasan File
+## Fitur Utama
 
-### `main.dart`
-Entry point aplikasi. Mengatur tema global (dark theme) dan menentukan halaman pertama yang ditampilkan yaitu `LoginScreen`.
+- `Login`
+  Validasi username dan password sebelum masuk ke menu utama.
+- `Data Kelompok`
+  Menampilkan data anggota kelompok.
+- `Aritmatika`
+  Penjumlahan dan pengurangan dua angka dengan input terfilter.
+- `Bilangan`
+  Mengecek bilangan ganjil/genap dan prima untuk input bilangan bulat.
+- `Hijriah`
+  Konversi tanggal Masehi ke kalender Hijriah.
+- `Jumlah Total`
+  Menjumlahkan data angka secara akumulatif.
+- `Stopwatch`
+  Stopwatch dengan start, stop, reset, dan lap.
+- `Piramid`
+  Menghitung luas alas, apotema, luas selimut, luas permukaan, dan volume piramid persegi.
+- `Umur`
+  Menghitung umur dari tanggal lahir.
+- `Weton`
+  Menampilkan weton berdasarkan tanggal yang dipilih.
+- `Kalender Saka Bali`
+  Menampilkan tanggal Saka Bali dari tanggal Masehi.
 
----
+## Kalender Saka Bali
 
-### `models/user_model.dart`
-Mendefinisikan class `User` dengan atribut `username` dan `password`. Berisi `userList`, yaitu daftar user yang terdaftar dan diizinkan untuk login ke aplikasi.
+Fitur Saka Bali memakai lookup data yang digenerate dari library:
+- `peradnya/balinese-date-js-lib`
 
----
+File lookup disimpan di:
+- `assets/data/balinese_lookup.json`
 
-### `theme/app_colors.dart`
-Menyimpan semua konstanta warna yang digunakan di seluruh aplikasi. Dibuat terpusat di sini agar warna mudah diubah tanpa harus mengedit satu per satu di tiap file.
+Script generator disimpan di:
+- `tool/generate_balinese_lookup.js`
 
----
+Helper Saka membaca data lookup tersebut melalui asset bundle di:
+- `lib/features/saka/saka_helper.dart`
 
-### `screens/login_screen.dart`
-Halaman login. User memasukkan username dan password, lalu divalidasi terhadap `userList` di `user_model.dart`. Jika cocok, user diarahkan ke `HomeScreen`. Jika salah, muncul pesan error.
+## Catatan
 
----
-
-### `screens/home_screen.dart`
-Halaman utama setelah login. Menampilkan grid 6 menu yang masing-masing mengarah ke halaman fitur yang berbeda. Terdapat tombol logout untuk kembali ke halaman login.
-
----
-
-### `screens/data_kelompok_screen.dart`
-Menampilkan informasi anggota kelompok berupa nama, NIM, dan peran masing-masing anggota dalam bentuk list card.
-
----
-
-### `screens/aritmatika_screen.dart`
-Halaman kalkulator sederhana. User memasukkan dua angka, lalu memilih operasi penjumlahan (+) atau pengurangan (−). Hasil ditampilkan di bawah tombol operasi.
-
----
-
-### `screens/bilangan_screen.dart`
-Halaman pengecekan bilangan. User memasukkan sebuah bilangan bulat, lalu aplikasi menampilkan apakah bilangan tersebut **ganjil atau genap**, dan apakah termasuk **bilangan prima** atau bukan.
-
----
-
-### `screens/jumlah_total_screen.dart`
-Halaman akumulasi angka. User dapat memasukkan angka satu per satu, dan aplikasi akan menjumlahkan semuanya secara kumulatif. Terdapat fitur hapus per item dan reset semua.
-
----
-
-### `screens/stopwatch_screen.dart`
-Halaman stopwatch dengan tampilan timer format `MM:SS.ms`. Memiliki tombol **Start**, **Stop**, **Reset**, dan **Lap** untuk mencatat waktu putaran.
-
----
-
-### `screens/piramid_screen.dart`
-Halaman kalkulator piramid persegi. User memasukkan panjang sisi alas dan tinggi piramid, lalu aplikasi menghitung dan menampilkan **luas alas**, **apotema**, **luas selimut**, **luas permukaan**, dan **volume**.
-
----
+- Project ini sudah memakai Material 3.
+- Warna aplikasi dipusatkan di `lib/app_colors.dart`.
+- Beberapa fitur input sudah diberi formatter dan pembatasan input agar lebih aman saat dipakai.
