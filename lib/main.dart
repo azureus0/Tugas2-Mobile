@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tugas_2_mobile/screens/login_screen.dart';
+import 'package:tugas_2_mobile/features/auth/login_screen.dart';
 
 void main() {
   runApp(const MainApp());
