@@ -1,3 +1,5 @@
+// jumlah_total_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../app_colors.dart';
 import 'jumlah_total_helper.dart';
@@ -12,34 +14,52 @@ class JumlahTotalScreen extends StatefulWidget {
 class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
   final _ctrl = TextEditingController();
   final List<double> _list = [];
-  double _total = 0;
+  final List<IgnoredNumber> _ignoredList = [];
+  double? _total;
+  bool _totalOverflow = false;
   String _error = '';
 
-  void _tambah() {
-    final val = double.tryParse(_ctrl.text.trim());
-    if (val == null) {
-      setState(() => _error = 'Masukkan angka yang valid!');
-      return;
-    }
-    setState(() {
-      _list.add(val);
-      _total += val;
-      _error = '';
-      _ctrl.clear();
-    });
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
   }
 
-  void _hapus(int index) {
+  void _deteksi() {
+    final result = JumlahTotalHelper.extractNumbers(_ctrl.text);
+
+    if (result.numbers.isEmpty && result.ignoredNumbers.isEmpty) {
+      setState(() {
+        _list.clear();
+        _ignoredList.clear();
+        _total = null;
+        _totalOverflow = false;
+        _error = 'Tidak ada angka yang ditemukan di dalam teks.';
+      });
+      return;
+    }
+
+    final total = JumlahTotalHelper.sum(result.numbers);
+
     setState(() {
-      _total -= _list[index];
-      _list.removeAt(index);
+      _list
+        ..clear()
+        ..addAll(result.numbers);
+      _ignoredList
+        ..clear()
+        ..addAll(result.ignoredNumbers);
+      _total = total;
+      _totalOverflow = total == null;
+      _error = '';
     });
   }
 
   void _reset() {
     setState(() {
       _list.clear();
-      _total = 0;
+      _ignoredList.clear();
+      _total = null;
+      _totalOverflow = false;
       _error = '';
       _ctrl.clear();
     });
@@ -47,14 +67,14 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasIgnored = _ignoredList.isNotEmpty;
+
     return Scaffold(
-      //backgroundColor: AppColors.bg,
       appBar: AppBar(
-        //backgroundColor: AppColors.red.withOpacity(0.1),
         foregroundColor: AppColors.textPrim,
         elevation: 0,
         title: const Text(
-          'Jumlah Total Angka',
+          'Deteksi & Jumlah Angka',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         ),
         leading: GestureDetector(
@@ -74,62 +94,120 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Input row
+            const Text(
+              'TEMPEL TEKS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _ctrl,
+              minLines: 5,
+              maxLines: 7,
+              style: const TextStyle(color: AppColors.textPrim, fontSize: 14),
+              decoration: InputDecoration(
+                hintText:
+                    'Contoh: budi makan 89 donat harga 5.000 total 15.000',
+                hintStyle: const TextStyle(color: AppColors.textMuted),
+                errorText: _error.isEmpty ? null : _error,
+                errorStyle: const TextStyle(color: AppColors.red, fontSize: 11),
+                filled: true,
+                fillColor: AppColors.surface,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: _error.isNotEmpty
+                        ? AppColors.red
+                        : AppColors.surface2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.red),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+              ),
+            ),
+
+            // Info angka diabaikan
+            if (hasIgnored) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border:
+                      Border.all(color: AppColors.orange.withOpacity(0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: AppColors.orange, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${_ignoredList.length} angka terlalu panjang diabaikan: '
+                        '${_ignoredList.map((e) => e.preview).join(', ')}',
+                        style: const TextStyle(
+                          color: AppColors.orange,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _ctrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
-                    style: const TextStyle(
-                      color: AppColors.textPrim,
-                      fontSize: 14,
-                    ),
-                    onSubmitted: (_) => _tambah(),
-                    decoration: InputDecoration(
-                      hintText: 'Masukkan angka...',
-                      hintStyle: const TextStyle(color: AppColors.textMuted),
-                      errorText: _error.isEmpty ? null : _error,
-                      errorStyle: const TextStyle(
-                        color: AppColors.red,
-                        fontSize: 11,
+                  child: GestureDetector(
+                    onTap: _deteksi,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.red.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(14),
+                        border:
+                            Border.all(color: AppColors.red.withOpacity(0.3)),
                       ),
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: _error.isNotEmpty
-                              ? AppColors.red
-                              : AppColors.surface2,
+                      child: const Text(
+                        'Deteksi Angka',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.red,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.red),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 GestureDetector(
-                  onTap: _tambah,
+                  onTap: _reset,
                   child: Container(
-                    width: 48,
+                    width: 52,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.red.withOpacity(0.15),
+                      color: AppColors.surface2,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.red.withOpacity(0.3)),
                     ),
-                    child: const Icon(Icons.add_rounded, color: AppColors.red),
+                    child: const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ),
               ],
@@ -142,7 +220,11 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.red.withOpacity(0.3)),
+                border: Border.all(
+                  color: _totalOverflow
+                      ? AppColors.orange.withOpacity(0.3)
+                      : AppColors.red.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,45 +242,59 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        JumlahTotalHelper.fmt(_total),
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.red,
-                        ),
-                      ),
+                      _totalOverflow
+                          ? const Text(
+                              'Terlalu besar!',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.orange,
+                              ),
+                            )
+                          : Text(
+                              _total != null
+                                  ? JumlahTotalHelper.fmt(_total!)
+                                  : '0',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.red,
+                              ),
+                            ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: _reset,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'TERDETEKSI',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                          letterSpacing: 0.8,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface2,
-                        borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_list.length} angka',
+                        style: const TextStyle(
+                          color: AppColors.textPrim,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.refresh_rounded,
-                            color: AppColors.textMuted,
-                            size: 16,
+                      if (hasIgnored) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_ignoredList.length} diabaikan',
+                          style: const TextStyle(
+                            color: AppColors.orange,
+                            fontSize: 11,
                           ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Reset',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -209,7 +305,7 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'DAFTAR ANGKA',
+                  'ANGKA YANG DITEMUKAN',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -229,7 +325,7 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
             const SizedBox(height: 10),
 
             Expanded(
-              child: _list.isEmpty
+              child: _list.isEmpty && _ignoredList.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -241,7 +337,7 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Belum ada angka',
+                            'Belum ada angka yang terdeteksi',
                             style: TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 14,
@@ -250,61 +346,120 @@ class _JumlahTotalScreenState extends State<JumlahTotalScreen> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: _list.length,
-                      itemBuilder: (context, i) => Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.surface2),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: AppColors.red.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${i + 1}',
-                                  style: const TextStyle(
-                                    color: AppColors.red,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                  : ListView(
+                      children: [
+                        // Angka valid
+                        ..._list.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final val = entry.value;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.surface2),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.red.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${i + 1}',
+                                      style: const TextStyle(
+                                        color: AppColors.red,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    JumlahTotalHelper.fmt(val),
+                                    style: const TextStyle(
+                                      color: AppColors.textPrim,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  'angka ke-${i + 1}',
+                                  style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                JumlahTotalHelper.fmt(_list[i]),
-                                style: const TextStyle(
-                                  color: AppColors.textPrim,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                          );
+                        }),
+
+                        // Angka diabaikan
+                        ..._ignoredList.map((ignored) => Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.orange.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.orange.withOpacity(0.3),
                                 ),
                               ),
-                            ),
-                            GestureDetector(
-                              onTap: () => _hapus(i),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: AppColors.textMuted,
-                                size: 18,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          AppColors.orange.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: AppColors.orange,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      ignored.preview,
+                                      style: const TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const Text(
+                                    'terlalu panjang',
+                                    style: TextStyle(
+                                      color: AppColors.orange,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
+                            )),
+                      ],
                     ),
             ),
           ],
