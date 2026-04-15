@@ -2,10 +2,27 @@
 
 Aplikasi Flutter multi-fitur untuk tugas mata kuliah Pemrograman Mobile. Project ini memakai struktur berbasis `features`, memiliki halaman login, menu utama, dan beberapa fitur utilitas/perhitungan seperti aritmatika, bilangan, hijriah, stopwatch, piramid, weton, umur, jumlah total, dan kalender Saka Bali.
 
-## Menjalankan Project
+## Setup Awal (Wajib sebelum `flutter run`)
+
+### 1. Generate data lookup Saka Bali
+
+Pastikan Node.js sudah terinstall, lalu jalankan:
+
+```bash
+node tool/generate_balinese_lookup.js
+```
+
+Script ini akan membuat file `assets/data/balinese_lookup.json` yang dibutuhkan fitur Kalender Saka Bali.
+
+### 2. Install dependencies Flutter
 
 ```bash
 flutter pub get
+```
+
+### 3. Jalankan aplikasi
+
+```bash
 flutter run
 ```
 
@@ -19,7 +36,7 @@ lib/
 +-- app_colors.dart
 +-- user_model.dart
 +-- widgets/
-¦   +-- detail_row.dart
+Â¦   +-- detail_row.dart
 +-- features/
     +-- auth/
     +-- home/
