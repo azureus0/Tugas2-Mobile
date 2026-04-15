@@ -27,6 +27,11 @@ flutter run
 ```
 
 Login memakai data user yang disimpan di `lib/user_model.dart`.
+#### Contoh:
+
+Username: abc
+
+Password: 123
 
 ## Struktur Project
 
